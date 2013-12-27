@@ -18,13 +18,11 @@
   BSD license, all text above must be included in any redistribution
  ****************************************************/
 
-#ifdef __AVR_ATtiny85__
- #include <TinyWireM.h>
- #define Wire TinyWireM
-#else
- #include <Wire.h>
-#endif
-#include "Adafruit_LEDBackpack.h"
+// Modified by SRG on 8/3/13 to use I2C.h library instead of wire.h
+
+//#include <Wire.h>
+#include <I2C.h> // http://dsscircuits.com/articles/arduino-i2c-master-library.html
+#include "Adafruit_LEDBackpack_I2cLib.h"
 #include "Adafruit_GFX.h"
 
 static const uint8_t numbertable[] = { 
@@ -48,17 +46,21 @@ static const uint8_t numbertable[] = {
 
 void Adafruit_LEDBackpack::setBrightness(uint8_t b) {
   if (b > 15) b = 15;
-  Wire.beginTransmission(i2c_addr);
-  Wire.write(0xE0 | b);
-  Wire.endTransmission();  
+//  Wire.beginTransmission(i2c_addr);
+//  Wire.write(0xE0 | b);
+//  Wire.endTransmission();  
+	I2c.write(i2c_addr, (uint8_t) (0xE0 | b));
+
 }
 
 void Adafruit_LEDBackpack::blinkRate(uint8_t b) {
-  Wire.beginTransmission(i2c_addr);
+//  Wire.beginTransmission(i2c_addr);
   if (b > 3) b = 0; // turn off if not sure
   
-  Wire.write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | (b << 1)); 
-  Wire.endTransmission();
+//  Wire.write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | (b << 1)); 
+//  Wire.endTransmission();
+	I2c.write(i2c_addr, (uint8_t) (HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | (b << 1)) );
+
 }
 
 Adafruit_LEDBackpack::Adafruit_LEDBackpack(void) {
@@ -67,25 +69,41 @@ Adafruit_LEDBackpack::Adafruit_LEDBackpack(void) {
 void Adafruit_LEDBackpack::begin(uint8_t _addr = 0x70) {
   i2c_addr = _addr;
 
-  Wire.begin();
+//  Wire.begin();
+//  Wire.beginTransmission(i2c_addr);
+//  Wire.write(0x21);  // turn on oscillator
+//  Wire.endTransmission();
 
-  Wire.beginTransmission(i2c_addr);
-  Wire.write(0x21);  // turn on oscillator
-  Wire.endTransmission();
+  I2c.begin();
+  I2c.write(i2c_addr, (uint8_t)0x21); // turn on oscillator
+	
   blinkRate(HT16K33_BLINK_OFF);
   
   setBrightness(15); // max brightness
 }
 
 void Adafruit_LEDBackpack::writeDisplay(void) {
+/*
   Wire.beginTransmission(i2c_addr);
   Wire.write((uint8_t)0x00); // start at address $00
-
+	
   for (uint8_t i=0; i<8; i++) {
     Wire.write(displaybuffer[i] & 0xFF);    
     Wire.write(displaybuffer[i] >> 8);    
   }
   Wire.endTransmission();  
+*/
+  
+  // convert display buffer into a byte array to send to LCD
+  uint8_t i2cbuffer[16];
+  uint8_t j = 0;
+  for (uint8_t i=0; i<8; i++) {
+      i2cbuffer[j++] = displaybuffer[i] & 0xFF;
+      i2cbuffer[j++] = displaybuffer[i] >> 8;
+  }
+  
+  I2c.write(i2c_addr, 0x00, i2cbuffer, 16);
+  
 }
 
 void Adafruit_LEDBackpack::clear(void) {
@@ -94,7 +112,8 @@ void Adafruit_LEDBackpack::clear(void) {
   }
 }
 
-Adafruit_8x8matrix::Adafruit_8x8matrix(void) : Adafruit_GFX(8, 8) {
+Adafruit_8x8matrix::Adafruit_8x8matrix(void) {
+  constructor(8, 8);
 }
 
 void Adafruit_8x8matrix::drawPixel(int16_t x, int16_t y, uint16_t color) {
@@ -130,7 +149,8 @@ void Adafruit_8x8matrix::drawPixel(int16_t x, int16_t y, uint16_t color) {
 }
 
 
-Adafruit_BicolorMatrix::Adafruit_BicolorMatrix(void) : Adafruit_GFX(8, 8) {
+Adafruit_BicolorMatrix::Adafruit_BicolorMatrix(void) {
+  constructor(8, 8);
 }
 
 void Adafruit_BicolorMatrix::drawPixel(int16_t x, int16_t y, uint16_t color) {
@@ -247,20 +267,14 @@ void  Adafruit_7segment::print(double n, int digits)
 
 size_t Adafruit_7segment::write(uint8_t c) {
 
-  uint8_t r = 0;
-
   if (c == '\n') position = 0;
   if (c == '\r') position = 0;
 
-  if ((c >= '0') && (c <= '9')) {
+  if ((c >= '0') && (c <= '9'))
     writeDigitNum(position, c-'0');
-    r = 1;
-  }
 
   position++;
   if (position == 2) position++;
-
-  return r;
 }
 
 void Adafruit_7segment::writeDigitRaw(uint8_t d, uint8_t bitmask) {
@@ -331,17 +345,11 @@ void Adafruit_7segment::printFloat(double n, uint8_t fracDigits, uint8_t base)
     // otherwise, display the number
     int8_t displayPos = 4;
     
-    if (displayNumber)  //if displayNumber is not 0
-    {
-      for(uint8_t i = 0; displayNumber; ++i) {
-        boolean displayDecimal = (fracDigits != 0 && i == fracDigits);
-        writeDigitNum(displayPos--, displayNumber % base, displayDecimal);
-        if(displayPos == 2) writeDigitRaw(displayPos--, 0x00);
-        displayNumber /= base;
-      }
-    }
-    else {
-      writeDigitNum(displayPos--, 0, false);
+    for(uint8_t i = 0; displayNumber; ++i) {
+      boolean displayDecimal = (fracDigits != 0 && i == fracDigits);
+      writeDigitNum(displayPos--, displayNumber % base, displayDecimal);
+      if(displayPos == 2) writeDigitRaw(displayPos--, 0x00);
+      displayNumber /= base;
     }
   
     // display negative sign if negative

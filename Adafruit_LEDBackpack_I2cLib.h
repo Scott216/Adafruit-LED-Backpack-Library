@@ -16,20 +16,15 @@
 
   Written by Limor Fried/Ladyada for Adafruit Industries.  
   BSD license, all text above must be included in any redistribution
+ 
+  Modified by Scott Goldthwaite to use DSSCircuits.com I2C.h library instead of wire.h
+  http://dsscircuits.com/articles/arduino-i2c-master-library.html
+ 
  ****************************************************/
 
-#if (ARDUINO >= 100)
- #include "Arduino.h"
-#else
- #include "WProgram.h"
-#endif
-
-#ifdef __AVR_ATtiny85__
- #include <TinyWireM.h>
-#else
- #include <Wire.h>
-#endif
-#include "Adafruit_GFX.h"
+#include "Arduino.h"
+#include "I2C.h"           // http://dsscircuits.com/articles/arduino-i2c-master-library.html
+#include "Adafruit_GFX.h"  // http://github.com/adafruit/Adafruit-GFX-Library
 
 #define LED_ON 1
 #define LED_OFF 0

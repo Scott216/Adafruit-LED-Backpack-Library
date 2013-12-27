@@ -1,3 +1,7 @@
+I modified this library to use DSSCircuits.com I2C.h library instead of wire.h. 
+It's only been tested with the 7-segment displays
+
+
 This is a library for the Adafruit LED Backpacks
 This library works with the Adafruit Mini 8x8 and 7-Segment LED Backpacks
   ----> http://www.adafruit.com/products/881
@@ -23,4 +27,4 @@ Place the Adafruit_LEDBackpack library folder your <arduinosketchfolder>/librari
 
 **** Also requires the Adafruit_GFX library for Arduino. ****
 Download it from here:
-	https://github.com/adafruit/Adafruit-GFX-Library
+https://github.com/adafruit/Adafruit-GFX-Library
