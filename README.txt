@@ -3,6 +3,8 @@ It's only been tested with the 7-segment displays
 
 Forked from: https://github.com/adafruit/Adafruit-LED-Backpack-Library
 
+DSS Circuits I2C.h Library: http://dsscircuits.com/articles/arduino-i2c-master-library.html
+
 
 This is a library for the Adafruit LED Backpacks
 This library works with the Adafruit Mini 8x8 and 7-Segment LED Backpacks
