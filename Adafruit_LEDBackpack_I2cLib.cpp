@@ -20,7 +20,6 @@
 
 // Modified by SRG on 8/3/13 to use I2C.h library instead of wire.h
 
-//#include <Wire.h>
 #include <I2C.h> // http://dsscircuits.com/articles/arduino-i2c-master-library.html
 #include "Adafruit_LEDBackpack_I2cLib.h"
 #include "Adafruit_GFX.h"
@@ -46,19 +45,13 @@ static const uint8_t numbertable[] = {
 
 void Adafruit_LEDBackpack::setBrightness(uint8_t b) {
   if (b > 15) b = 15;
-//  Wire.beginTransmission(i2c_addr);
-//  Wire.write(0xE0 | b);
-//  Wire.endTransmission();  
 	I2c.write(i2c_addr, (uint8_t) (0xE0 | b));
 
 }
 
 void Adafruit_LEDBackpack::blinkRate(uint8_t b) {
-//  Wire.beginTransmission(i2c_addr);
   if (b > 3) b = 0; // turn off if not sure
   
-//  Wire.write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | (b << 1)); 
-//  Wire.endTransmission();
 	I2c.write(i2c_addr, (uint8_t) (HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | (b << 1)) );
 
 }
@@ -68,12 +61,6 @@ Adafruit_LEDBackpack::Adafruit_LEDBackpack(void) {
 
 void Adafruit_LEDBackpack::begin(uint8_t _addr = 0x70) {
   i2c_addr = _addr;
-
-//  Wire.begin();
-//  Wire.beginTransmission(i2c_addr);
-//  Wire.write(0x21);  // turn on oscillator
-//  Wire.endTransmission();
-
   I2c.begin();
   I2c.write(i2c_addr, (uint8_t)0x21); // turn on oscillator
 	
@@ -83,16 +70,6 @@ void Adafruit_LEDBackpack::begin(uint8_t _addr = 0x70) {
 }
 
 void Adafruit_LEDBackpack::writeDisplay(void) {
-/*
-  Wire.beginTransmission(i2c_addr);
-  Wire.write((uint8_t)0x00); // start at address $00
-	
-  for (uint8_t i=0; i<8; i++) {
-    Wire.write(displaybuffer[i] & 0xFF);    
-    Wire.write(displaybuffer[i] >> 8);    
-  }
-  Wire.endTransmission();  
-*/
   
   // convert display buffer into a byte array to send to LCD
   uint8_t i2cbuffer[16];
